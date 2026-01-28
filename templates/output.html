@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title> Optimal Solution </title>
+{% endblock %}
+
+{% block body %}
+    <h1> Solution: </h1>
+    <table>
+    {% for r, l, u in result: %}
+        <tr> 
+            <td> Length: {% print(l) %} km </td>            
+            <td> Route: {% print(r) %} </td>
+            <td> <img src="data:image/png;base64, {{ u }}" alt="Bengaluru Map"> </td>
+        </tr>
+    {% endfor %}
+    </table>
+{% endblock %}
