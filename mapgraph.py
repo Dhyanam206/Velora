@@ -4,13 +4,15 @@ import sys
 from scipy.spatial import KDTree
 import csv
 import io
+import os
 import base64
 import matplotlib
 from matplotlib.figure import Figure
 matplotlib.use('Agg')
 
-node_file = 'graph_nodes.csv'
-edge_file = 'graph_edges.csv'
+script_dir = os.path.dirname(os.path.abspath(__file__))
+node_file = os.path.join(script_dir, 'graph_nodes.csv')
+edge_file = os.path.join(script_dir, 'graph_edges.csv')
 
 nodes = {}
 xnodes = {}
