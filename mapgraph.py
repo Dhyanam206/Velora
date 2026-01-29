@@ -52,7 +52,6 @@ def load_edges(url):
             row['length'] = float(row['length'])
             edges[row['id1']].append((row['id2'], row['length']))
             r_edges[row['id2']].append((row['id1'], row['length']))
-        ef.close()
 
 def precompute():
     global points
