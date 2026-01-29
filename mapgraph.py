@@ -30,29 +30,35 @@ def haversine_distance(nd1, nd2):
     return d
 
 def load_nodes(file):
-    nf = open(file, 'r')
-    nr = csv.DictReader(nf)
-    for row in nr:
-        row['id'] = int(row['id'])
-        row['lat'] = float(row['lat'])
-        row['lng'] = float(row['lng'])
-        nodes[row['id']] = (row['lat'], row['lng'])
-        r_nodes[row['id']] = (row['lat'], row['lng'])
-        xnodes[(row['lat'], row['lng'])] = row['id']
-        edges[row['id']] = []
-        r_edges[row['id']] = []
-    nf.close()
+    if os.path.isfile(file):
+        nf = open(file, 'r')
+        nr = csv.DictReader(nf)
+        for row in nr:
+            row['id'] = int(row['id'])
+            row['lat'] = float(row['lat'])
+            row['lng'] = float(row['lng'])
+            nodes[row['id']] = (row['lat'], row['lng'])
+            r_nodes[row['id']] = (row['lat'], row['lng'])
+            xnodes[(row['lat'], row['lng'])] = row['id']
+            edges[row['id']] = []
+            r_edges[row['id']] = []
+        nf.close()
+    else:
+        raise FileNotFoundError(file + ' not found!')
 
 def load_edges(file):
-    ef = open(file, 'r')
-    er = csv.DictReader(ef)
-    for row in er:
-        row['id1'] = int(row['id1'])
-        row['id2'] = int(row['id2'])
-        row['length'] = float(row['length'])
-        edges[row['id1']].append((row['id2'], row['length']))
-        r_edges[row['id2']].append((row['id1'], row['length']))
-    ef.close()
+    if os.path.isfile(file):
+        ef = open(file, 'r')
+        er = csv.DictReader(ef)
+        for row in er:
+            row['id1'] = int(row['id1'])
+            row['id2'] = int(row['id2'])
+            row['length'] = float(row['length'])
+            edges[row['id1']].append((row['id2'], row['length']))
+            r_edges[row['id2']].append((row['id1'], row['length']))
+        ef.close()
+    else:
+        raise FileNotFoundError(file + ' not found!')
 
 def precompute():
     global points
