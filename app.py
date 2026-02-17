@@ -1,7 +1,5 @@
 from flask import *
-import solution as sol
-import pandas as pd
-import sys
+import route as sol
 
 sol.precompute()
 
@@ -11,7 +9,7 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 
 @app.route('/input')
 def input():
-    return render_template('input.html')
+    return render_template('upload.html')
  
 @app.route('/output', methods = ['GET', 'POST'])
 def output():
@@ -23,7 +21,7 @@ def output():
             return "No selected file", 400
         if file and file.filename.endswith(('.xls', '.xlsx')):
             res = sol.optimize(file)
-            return render_template('output.html', result = res)
+            return render_template('final.html', data = res)
         else:
             return "Invalid file format. Please upload an Excel file.", 400
 

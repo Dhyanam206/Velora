@@ -145,6 +145,9 @@ def astar(src, dest):
 
 def optimal_route(src, dest):
     route, length = astar(src, dest)
+    croute = []
+    for n in route:
+        croute.append(r_nodes[n])
     #print('heuristic_route:', route)
     #print('Length:', length)
-    return route, length
+    return croute, length

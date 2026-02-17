@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velora | Optimization Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+/* ===============================
+   GLOBAL / BACKGROUND
+================================ */
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at 20% 20%, #1c2d6b, #0b1437 60%);
+    color: #e8ecff;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* subtle glow overlay */
+body::before {
+    content: "";
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(79,124,255,0.25), transparent 70%);
+    top: -150px;
+    left: -150px;
+    z-index: 0;
+}
+
+.logo {
+    width: 100%;
+    margin-bottom: 40px;
+    filter: brightness(1.2) contrast(1.1);
+}
+.nav-button {
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+
+    border-radius: 12px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #bfc8ff;
+
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Hover State */
+.nav-button:hover {
+    background: rgba(79,124,255,0.15);
+    box-shadow: 0 0 12px rgba(79,124,255,0.4);
+    transform: translateX(4px);
+}
+
+/* Active State */
+.nav-button.active {
+    background: linear-gradient(90deg,#4f7cff,#8b5cf6);
+    color: white;
+    box-shadow: 0 0 20px rgba(79,124,255,0.6);
+}
+
+/* ===============================
+   CONTENT
+================================ */
+
+.content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    position: relative;
+    z-index: 1;
+}
+
+.pane {
+    display: none;
+}
+
+.pane.active {
+    display: block;
+}
+
+/* ===============================
+   KPI CARDS
+================================ */
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    gap: 25px;
+    margin-bottom: 50px;
+}
+
+.kpi {
+    background: rgba(20,30,80,0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 25px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.kpi:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 0 25px rgba(79,124,255,0.4);
+}
+
+.kpi h4 {
+    font-weight: 400;
+    color: #9fb2ff;
+}
+
+.kpi h2 {
+    font-size: 28px;
+    margin-top: 8px;
+}
+
+/* ===============================
+   MAP
+================================ */
+
+.map {
+    height: 420px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(79,124,255,0.3);
+    margin-bottom: 40px;
+}
+
+/* ===============================
+   TABLE
+================================ */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(20,30,80,0.7);
+    backdrop-filter: blur(6px);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+th {
+    background: rgba(79,124,255,0.2);
+}
+
+th, td {
+    padding: 14px;
+    text-align: center;
+}
+
+tr {
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ===============================
+   CHART CANVAS
+================================ */
+
+canvas {
+    margin-top: 50px;
+    background: rgba(20,30,80,0.7);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.route-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(79,124,255,0.2);
+    color: #cbd5ff;
+    font-size: 13px;
+    margin: 2px;
+    border: 1px solid rgba(79,124,255,0.4);
+}
+
+.route-arrow {
+    margin: 0 6px;
+    color: #8b5cf6;
+    font-weight: 600;
+}
+
+.route-office {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(34,197,94,0.15);
+    color: #86efac;
+    border: 1px solid rgba(34,197,94,0.4);
+    font-size: 13px;
+}
+
+/* ===============================
+   SIDEBAR
+================================ */
+
+.sidebar {
+    width: 270px;
+    background: rgba(10,20,60,0.8);
+    backdrop-filter: blur(12px);
+    border-right: 1px solid rgba(255,255,255,0.08);
+    padding: 30px 20px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scrollable nav section */
+.sidebar-content {
+    flex: 1;
+    padding: 40px 20px 20px 20px;
+    overflow-y: auto;
+}
+
+/* Footer pinned at bottom */
+.sidebar-footer {
+    padding: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #38bdf8;
+    padding-top: 30px;
+    padding-bottom: 40px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <!-- Use your actual logo file here -->
+    <div class="logo"><center>VELORA</center></div>
+
+    <button class="nav-button active"
+            onclick="showPane('summary',this)">
+        Summary
+    </button>
+
+    {% for vehicle in data.vehicle_schedules %}
+        <button class="nav-button"
+                onclick="showPane('vehicle{{ loop.index }}',this)">
+            Vehicle {{ vehicle.vehicle.id }}
+        </button>
+    {% endfor %}
+
+    <div class="sidebar-footer">
+        © 2026 Velora.<br>
+        Intelligent Route Optimisation Software.
+    </div>
+</div>
+
+<div class="content">
+
+<!-- SUMMARY -->
+<div id="summary" class="pane active">
+
+<div class="kpi-grid">
+    <div class="kpi">
+        <h4>Total Employees</h4>
+        <h2>{{ data.summary.total_employees }}</h2>
+    </div>
+
+    <div class="kpi">
+        <h4>Assigned</h4>
+        <h2>{{ data.summary.employees_assigned }}</h2>
+    </div>
+
+    <div class="kpi">
+        <h4>Optimized Cost</h4>
+        <h2>{{ data.summary.travel_cost }}</h2>
+    </div>
+
+    <div class="kpi">
+        <h4>Baseline Cost</h4>
+        <h2>{{ data.summary.baseline_cost }}</h2>
+    </div>
+</div>
+
+<canvas id="costDist"></canvas>
+<canvas id="timeDist"></canvas>
+<canvas id="costCompare"></canvas>
+
+</div>
+
+<!-- VEHICLE PANES -->
+{% for vehicle in data.vehicle_schedules %}
+<div id="vehicle{{ loop.index }}" class="pane">
+
+<h2 style="margin-bottom:20px;">Vehicle {{ vehicle.vehicle.id }}</h2>
+
+<div id="map{{ loop.index }}" class="map"></div>
+
+<table>
+<tr>
+<th>Trip</th>
+<th>Employees</th>
+<th>Start</th>
+<th>Arrival</th>
+<th>Distance (km)</th>
+<th>Cost</th>
+</tr>
+
+{% for trip in vehicle.trips %}
+<tr>
+<td>{{ trip.trip_number }}</td>
+<td>
+    {% for emp in trip.employees %}
+        <span class="route-pill">{{ emp }}</span>
+        {% if not loop.last %}
+            <span class="route-arrow">→</span>
+        {% endif %}
+    {% endfor %}
+    <span class="route-arrow">→</span>
+    <span class="route-office">Office</span>
+</td>
+
+<td>{{ trip.start_time }}</td>
+<td>{{ trip.arrival_at_office }}</td>
+<td>{{ trip.distance_km }}</td>
+<td>{{ trip.cost }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+{% endfor %}
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+const data = {{ data|tojson }};
+const office = data.employee_pickups.Office;
+let maps = {};  
+
+function showPane(id,btn){
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+
+    document.querySelectorAll('.nav-button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const mapDiv = document.querySelector(`#${id} .map`);
+    if(mapDiv){
+        const mapId = mapDiv.id;
+        setTimeout(()=>{
+            maps[mapId].invalidateSize();
+        }, 100);
+    }
+}
+
+/* Maps */
+
+data.vehicle_schedules.forEach((vehicle,index)=>{
+    const mapId = "map"+(index+1);
+    const map = L.map(mapId).setView([office[0],office[1]],12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution:'© OpenStreetMap'
+    }).addTo(map);
+
+    maps[mapId] = map; 
+    
+    const start = vehicle.vehicle.start_location.replace(/[()]/g,"").split(",");
+    L.marker([parseFloat(start[0]), parseFloat(start[1])])
+    .addTo(map)
+    .bindPopup(vehicle.vehicle.id);
+    
+    L.marker([office[0], office[1]])
+    .addTo(map)
+    .bindPopup("Office");
+
+    vehicle.trips.forEach(trip=>{
+        const coordinates = trip.route.map(coord => [coord[0], coord[1]]);
+        L.polyline(coordinates,{
+            color:'#4f7cff',
+            weight:4
+        }).addTo(map);
+        
+        trip.employees.forEach(emp=>{
+            let point = data.employee_pickups[emp];
+            L.marker([point.lat, point.lng])
+            .addTo(map)
+            .bindPopup(emp);
+        });
+    });
+});
+
+/* Charts */
+
+let ids=[],costs=[],times=[];
+
+data.vehicle_schedules.forEach(vehicle=>{
+    let totalCost=0,totalTime=0;
+
+    vehicle.trips.forEach(trip=>{
+        totalCost+=trip.cost;
+        if(trip.constraints && trip.constraints.time){
+            totalTime+=trip.constraints.time.arrival_at_office
+                       - trip.constraints.time.start_time;
+        }
+    });
+
+    ids.push(vehicle.vehicle.id);
+    costs.push(totalCost);
+    times.push(totalTime/60);
+});
+
+new Chart(document.getElementById("costDist"),{
+    type:"bar",
+    data:{labels:ids,datasets:[{
+        label:"Optimized Cost Distribution",
+        data:costs,
+        backgroundColor:"#4f7cff"
+    }]}
+});
+
+new Chart(document.getElementById("timeDist"),{
+    type:"bar",
+    data:{labels:ids,datasets:[{
+        label:"Optimized Travel Time (Hours)",
+        data:times,
+        backgroundColor:"#8b5cf6"
+    }]}
+});
+
+new Chart(document.getElementById("costCompare"),{
+    type:"bar",
+    data:{
+        labels:["Baseline Cost","Optimized Cost"],
+        datasets:[{
+            label:"comparison",
+            data:[
+                data.summary.baseline_cost,
+                data.summary.travel_cost
+            ],
+            backgroundColor:["#ef4444","#22c55e"]
+        }]
+    }
+});
+</script>
+
+</body>
+</html>
