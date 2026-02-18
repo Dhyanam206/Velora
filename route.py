@@ -454,6 +454,7 @@ class ProblemState:
     def __init__(self, employees: List[Employee], vehicles: List[Vehicle], 
                  office: Location, metadata: Dict = None):
         self.employees = {e.id: e for e in employees}
+        self.EMPLOYEES = list(employees)
         self.vehicles = {v.id: v for v in vehicles}
         self.emp_list = employees
         self.veh_list = vehicles
@@ -1676,6 +1677,17 @@ class ResultsVerifier:
             'savings_pct': round((baseline_cost_total - breakdown['travel_cost']) / baseline_cost_total * 100, 2) if baseline_cost_total > 0 else 0
         }
         
+        results['employees'] = {}
+        for emp in self.state.EMPLOYEES:
+            results['employees'][emp.id] = {}
+            results['employees'][emp.id]['priority'] = emp.priority
+            results['employees'][emp.id]['pickup'] = emp.pickup
+            results['employees'][emp.id]['vehicle'] = '-'
+            results['employees'][emp.id]['pickup_time'] = '-'
+            results['employees'][emp.id]['dropoff_time'] = '-'
+
+        results['Office'] = (float(self.state.office.lat), float(self.state.office.lng))
+        
         for schedule in solution.schedules:
             if not schedule.trips:
                 continue
@@ -1700,6 +1712,11 @@ class ResultsVerifier:
                 if not feasible:
                     results['all_constraints_satisfied'] = False
                 
+                for emp in trip.employees:
+                    results['employees'][emp]['vehicle'] = schedule.vehicle.id
+                    results['employees'][emp]['pickup_time'] = self._fmt_time(trip.pickup_times[emp])
+                    results['employees'][emp]['dropoff_time'] = self._fmt_time(trip.arrival_at_office)
+
                 trip_info = {
                     'trip_number': i + 1,
                     'employees': trip.employees,
@@ -1721,7 +1738,7 @@ class ResultsVerifier:
                 sched_info['trips'].append(trip_info)
             
             results['vehicle_schedules'].append(sched_info)
-        
+
         return results
     
     def _fmt_time(self, mins) -> str:
@@ -1830,11 +1847,6 @@ def optimize(filepath: str, verbose: bool = True) -> Dict:
     
     verifier = ResultsVerifier(state)
     results = verifier.verify_and_display(solution)
-
-    results['employee_pickups'] = {}
-    for emp in employees:
-        results['employee_pickups'][emp.id] = emp.pickup
-    results['employee_pickups']['Office'] = (float(office.lat), float(office.lng))
     
     if verbose:
         verifier.print_results(results)
@@ -1851,4 +1863,3 @@ if __name__ == "__main__":
     
     print(f"Optimizing: {filepath}\n")
     results = optimize(filepath)
-    print(results)
