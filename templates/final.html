@@ -146,6 +146,33 @@ body {
 
 /* ================= CONTENT ================= */
 
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.upload-btn {
+    padding: 10px 18px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(90deg,#4f7cff,#8b5cf6);
+    color: white;
+    box-shadow: 0 0 15px rgba(79,124,255,0.5);
+    transition: 0.3s ease;
+}
+
+.upload-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 25px rgba(79,124,255,0.8);
+}
+
 .content {
     flex: 1;
     padding: 40px;
@@ -346,7 +373,17 @@ canvas {
 
 <div id="summary" class="pane active">
 
-<h1 class="dashboard-title">Route Optimization Dashboard</h1>
+<div class="dashboard-header">
+    <h1 class="dashboard-title">
+        Route Optimization Dashboard
+    </h1>
+
+    <button class="upload-btn"
+            onclick="window.location.href='/input'">
+        <i class="fa fa-upload"></i>
+        New Testcase
+    </button>
+</div>
 
 <div class="kpi-row">
     <div class="kpi-card">
@@ -382,12 +419,12 @@ canvas {
         <h2>₹{{ data.summary.baseline_cost | round(2) }}</h2>
     </div>
     <div class="kpi-card">
-        <h4>Savings</h4>
-        <h2>₹{{ data.summary.savings | round(2) }}</h2>
+        <h4>Baseline Time</h4>
+        <h2>{{ data.summary.baseline_time | round(2) }} min</h2>
     </div>
     <div class="kpi-card">
-        <h4>Percentage Saved</h4>
-        <h2>{{ data.summary.savings_pct | round(2) }}%</h2>
+        <h4>% Optimized</h4>
+        <h2>{{ data.summary.optimized_pct | round(2) }}%</h2>
     </div>
 </div>
 

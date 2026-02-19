@@ -82,6 +82,7 @@ class Employee:
     vehicle_preference: VehiclePreference
     sharing_preference: SharingPreference
     baseline_cost: float = 0.0
+    baseline_time: float = 0.0
     
     @property
     def max_passengers(self) -> int:
@@ -269,7 +270,8 @@ class DataLoader:
                 latest_drop=DataLoader.parse_time(r['latest_drop']),
                 vehicle_preference=VehiclePreference(vp) if vp in ['premium','normal','any'] else VehiclePreference.ANY,
                 sharing_preference=SharingPreference(sp) if sp in ['single','double','triple'] else SharingPreference.TRIPLE,
-                baseline_cost=b_info['cost']
+                baseline_cost=b_info['cost'],
+                baseline_time=b_info['time']
             )
             
             # --- MODIFIED: Attach the calculated weighted baseline value ---
@@ -1751,6 +1753,7 @@ class ResultsVerifier:
         
         # Calculate Base metrics
         baseline_cost_total = sum(self.state.employees[eid].baseline_cost for eid in assigned_ids)
+        baseline_time_total = sum(self.state.employees[eid].baseline_time for eid in assigned_ids)
         
         # --- MODIFIED: Calculate Total Weighted Baseline Value ---
         # Summing the pre-calculated baseline_value (alpha*cost + beta*time)
@@ -1769,10 +1772,12 @@ class ResultsVerifier:
             'alpha': round(self.state.alpha, 2),
             'beta': 1 - round(self.state.alpha, 2),
             'baseline_cost': round(baseline_cost_total, 2),
+            'baseline_time': round(baseline_time_total, 2),
             # --- MODIFIED: Add Weighted Baseline to summary ---
             'baseline_weighted': round(baseline_weighted_total, 2),
             'savings': round(baseline_cost_total - breakdown['travel_cost'], 2),
-            'savings_pct': round((baseline_cost_total - breakdown['travel_cost']) / baseline_cost_total * 100, 2) if baseline_cost_total > 0 else 0
+            'savings_pct': round((baseline_cost_total - breakdown['travel_cost']) / baseline_cost_total * 100, 2) if baseline_cost_total > 0 else 0,
+            'optimized_pct': round((1.0 - breakdown['objective']) * 100, 2)
         }
         
         results['employees'] = {}
@@ -1863,9 +1868,11 @@ class ResultsVerifier:
         print(f"   Total Time:         {s['total_time']:.2f} min")
         print(f"   Objective Value:    {s['objective']:.2f}")
         print(f"   Baseline Cost:      ₹{s['baseline_cost']:.2f}")
+        print(f"   Baseline Time:      {s['baseline_time']:.2f} min")
         # --- MODIFIED: Print the new weighted baseline ---
         print(f"   Baseline Value:   {s['baseline_weighted']:.2f}")
         print(f"   Savings (Cost):     ₹{s['savings']:.2f} ({s['savings_pct']:.1f}%)")
+        print(f"   Percentage Optimized:     {s['optimized_pct']:.2f}%")
         
         print(f"\n✓ ALL CONSTRAINTS: {'✅ SATISFIED' if results['all_constraints_satisfied'] else '❌ VIOLATIONS'}")
         
