@@ -185,6 +185,7 @@ body {
 /* ================= SUMMARY ================= */
 
 .dashboard-title {
+    font-family: 'Orbitron', sans-serif;
     font-size: 22px;
     margin-bottom: 30px;
 }
@@ -339,6 +340,22 @@ canvas {
         #7c3aed
     );
 }
+
+.map-tooltip {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    background: rgba(20,30,80,0.95);
+    color: #e8ecff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(79,124,255,0.4);
+    box-shadow: 0 0 15px rgba(79,124,255,0.5);
+}
+
+.leaflet-tooltip {
+    background: transparent;
+    border: none;
+}
 </style>
 </head>
 <body>
@@ -470,8 +487,41 @@ canvas {
 <!-- VEHICLE PANES -->
 {% for vehicle in data.vehicle_schedules %}
 <div id="vehicle{{ loop.index }}" class="pane">
+    
+<div class="dashboard-header">
+    <h1 class="dashboard-title">
+        Vehicle {{ vehicle.vehicle.id }}
+    </h1>
 
-<h2 style="margin-bottom:20px;">Vehicle {{ vehicle.vehicle.id }}</h2>
+    <button class="upload-btn"
+            onclick="window.location.href='/input'">
+        <i class="fa fa-upload"></i>
+        New Testcase
+    </button>
+</div>
+
+<div class="kpi-row">
+    <div class="kpi-card">
+        <h4>Category</h4>
+        <h2>{{ vehicle.vehicle.category }}</h2>
+    </div> 
+    <div class="kpi-card">
+        <h4>Capacity</h4>
+        <h2>{{ vehicle.vehicle.capacity }}</h2>
+    </div> 
+    <div class="kpi-card">
+        <h4>Distance</h4>
+        <h2>{{ vehicle.vehicle.distance | round(2) }} km</h2>
+    </div>
+    <div class="kpi-card">
+        <h4>Time</h4>
+        <h2>{{ vehicle.vehicle.time | round(2) }} min</h2>
+    </div>
+    <div class="kpi-card">
+        <h4>Cost</h4>
+        <h2>₹{{ vehicle.vehicle.cost | round(2) }}</h2>
+    </div>
+</div>
 
 <div id="{{ vehicle.vehicle.id }}" class="map"></div>
 
@@ -488,7 +538,8 @@ canvas {
 {% set ns = namespace(curr = vehicle.vehicle.id) %}
 {% for trip in vehicle.trips %}
 <tr class="trip-row" 
-    onclick="toggleTripDetails(this, '{{ vehicle.vehicle.id }}', {{ trip.trip_number }})" 
+    id="{{ vehicle.vehicle.id }}_{{ trip.trip_number }}"
+    onclick="toggleTripDetails('{{ vehicle.vehicle.id }}', {{ trip.trip_number }})" 
     style="background-color: {{ route_colors[(trip.trip_number - 1) % (route_colors | length)] }};">
 <td>{{ trip.trip_number }}</td>
 <td>
@@ -568,7 +619,9 @@ function showPane(id,btn){
     }, 100);
 }
 
-function toggleTripDetails(row, vehicle, row_n) {
+function toggleTripDetails(vehicle, row_n) {
+
+    var row = document.getElementById(`${vehicle}_${row_n}`);
 
     const detailsRow = row.nextElementSibling;
 
@@ -622,13 +675,32 @@ data.vehicle_schedules.forEach((vehicle,index)=>{
     routes[vehicle.vehicle.id] = {};
     
     const start = vehicle.vehicle.start_location.replace(/[()]/g,"").split(",");
-    L.marker([parseFloat(start[0]), parseFloat(start[1])])
-    .addTo(map)
-    .bindPopup(vehicle.vehicle.id);
+    let depotMarker = L.marker([parseFloat(start[0]), parseFloat(start[1])])
+    .addTo(map);
+    depotMarker.bindTooltip(`
+        <div class="map-tooltip">
+            <strong>Vehicle:</strong> ${vehicle.vehicle.id}<br>
+            <strong>Depot:</strong> Start Location<br>
+            <strong>Capacity:</strong> ${vehicle.vehicle.capacity}
+        </div>
+    `, {
+        direction: "top",
+        offset: [0, -10],
+        sticky: true
+    });
     
-    L.marker([office[0], office[1]])
-    .addTo(map)
-    .bindPopup("Office");
+    let officeMarker = L.marker([office[0], office[1]])
+    .addTo(map);
+    officeMarker.bindTooltip(`
+        <div class="map-tooltip">
+            <strong>Office</strong><br>
+            Central Drop-off Hub
+        </div>
+    `, {
+        direction: "top",
+        offset: [0, -10],
+        sticky: true
+    });
 
     vehicle.trips.forEach(trip=>{
         const coordinates = trip.route.map(coord => [coord[0], coord[1]]);
@@ -637,12 +709,31 @@ data.vehicle_schedules.forEach((vehicle,index)=>{
             zIndexOffset: 0,
             weight:4
         }).addTo(map);
+
+        routes[vehicle.vehicle.id][trip.trip_number].on('click', function(){
+            toggleTripDetails(vehicle.vehicle.id, trip.trip_number);
+        });
         
         trip.employees.forEach(emp=>{
             let point = data.employees[emp].pickup;
-            L.marker([point.lat, point.lng])
-            .addTo(map)
-            .bindPopup(emp);
+            let emp_marker = L.marker([point.lat, point.lng]).addTo(map);
+            emp_marker.bindTooltip(`
+                <div class="map-tooltip">
+                    <strong>Employee:</strong> ${emp}<br>
+                    <strong>Priority:</strong> ${data.employees[emp].priority}<br>
+                    <strong>Trip:</strong> ${trip.trip_number}<br>
+                    <strong>Pickup:</strong> ${data.employees[emp].pickup_time}<br>
+                    <strong>Drop:</strong> ${data.employees[emp].dropoff_time}
+                </div>
+            `, {
+                direction: "top",
+                offset: [0, -10],
+                opacity: 1,
+                sticky: true
+            });
+            emp_marker.on('click', function(){
+                toggleTripDetails(vehicle.vehicle.id, trip.trip_number);
+            });
         });
     });
 });
@@ -651,17 +742,9 @@ data.vehicle_schedules.forEach((vehicle,index)=>{
 
 let ids=[],costs=[],times=[];
 data.vehicle_schedules.forEach(vehicle=>{
-    let totalCost=0,totalTime=0;
-    vehicle.trips.forEach(trip=>{
-        totalCost+=trip.cost;
-        if(trip.constraints && trip.constraints.time){
-            totalTime+=trip.constraints.time.arrival_at_office
-                       - trip.constraints.time.start_time;
-        }
-    });
     ids.push(vehicle.vehicle.id);
-    costs.push(totalCost);
-    times.push(totalTime/60);
+    costs.push(vehicle.vehicle.cost);
+    times.push(vehicle.vehicle.time);
 });
 
 new Chart(document.getElementById("timeDonut"), {
