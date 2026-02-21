@@ -1,36 +1,35 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/input.css') }}">
+        <title>Velora | Route Optimisation</title>
+    </head>
+    <body>
+        <header>
+            <div class="logo">VELORA</div>
+        </header>
 
-{% block head %}
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/input.css') }}">
-<title>Velora | Route Optimisation</title>
-{% endblock %}
+        <section class="hero">
+            <div class="card">
+                <h1>Upload TestCase Data</h1>
+                <p>Import your TestCase Info via Excel (.xlsx) and let Velora optimise your plan instantly.</p>
 
-{% block body %}
+                <form action="/output" method="POST" enctype="multipart/form-data">
+                    <div class="file-input">
+                        <input type="file" name="file" accept=".xlsx" required>
+                    </div>
 
-<header>
-    <div class="logo">VELORA</div>
-</header>
-
-<section class="hero">
-    <div class="card">
-        <h1>Upload TestCase Data</h1>
-        <p>Import your TestCase Info via Excel (.xlsx) and let Velora optimise your plan instantly.</p>
-
-        <form action="/output" method="POST" enctype="multipart/form-data">
-            <div class="file-input">
-                <input type="file" name="file" accept=".xlsx" required>
+                    <button type="submit" class="submit-btn" value = "Upload">
+                        Optimise Routes
+                    </button>
+                </form>
             </div>
+        </section>
 
-            <button type="submit" class="submit-btn" value = "Upload">
-                Optimise Routes
-            </button>
-        </form>
-    </div>
-</section>
-
-<footer>
-    © 2026 Velora. Intelligent Route Optimisation Software.
-</footer>
-{% endblock %}
+        <footer>
+            © 2026 Velora. Intelligent Route Optimisation Software.
+        </footer>
+    </body>
+</html>
