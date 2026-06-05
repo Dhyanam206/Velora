@@ -43,7 +43,7 @@ Velora solves the Capacitated Vehicle Routing Problem with Time Windows (CVRPTW)
 
 ### 3. Phase II: Hybrid Route Construction
 * **Route Seeding:** Initializes routes using the top $k$ pairs from the probabilistic savings list.
-* **Regret-$k$ Insertion:** For unassigned employees, calculates a **Regret Score** (the cost difference between their *best* and *second-best* insertion option). Employees with the highest regret are prioritized and inserted first.
+* **Regret-k Insertion:** For unassigned employees, calculates a **Regret Score** (the cost difference between their *best* and *second-best* insertion option). Employees with the highest regret are prioritized and inserted first.
 
 ### 4. Phase III: ALNS (Adaptive Large Neighborhood Search)
 Iteratively improves the initial solution over thousands of cycles:
