@@ -66,7 +66,7 @@ Iteratively improves the initial solution over thousands of cycles:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/bhavyaPawar22/Velora.git](https://github.com/bhavyaPawar22/Velora.git)
+    git clone [https://github.com/Dhyanam206/Velora.git](https://github.com/Dhyanam206/Velora.git)
     cd Velora
     ```
 
